@@ -1,6 +1,6 @@
-import React from 'react'
 
-const ReviewLayout = ({children}) => {
+
+const ReviewInputLayout = ({children}) => {
   return (
     <div
       className='flex items-center text-center justify-center mt-10 mx-3'
@@ -8,4 +8,4 @@ const ReviewLayout = ({children}) => {
   )
 }
 
-export default ReviewLayout
+export default ReviewInputLayout
