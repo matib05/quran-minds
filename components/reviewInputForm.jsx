@@ -117,7 +117,7 @@ const ReviewInputForm = () => {
               name="toSurah"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select ending Surah</FormLabel>
+                  <FormLabel>Select Ending Surah</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
