@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
+import { useFormState } from "react-dom";
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -21,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { SurahData } from '@/utils/SurahData'
+import { getQuestions } from '@/app/actions'
 
 
 const FormSchema = z.object({
@@ -42,27 +45,65 @@ const ReviewInputForm = () => {
   const form = useForm({
     resolver: zodResolver(FormSchema),
   });
+  const [state, formAction] = useFormState(getQuestions, {error: null});
 
-  function onSubmit(data) {
-    console.log(data);
+
+  // useEffect(() => {
+  //   if (!state) {
+  //     return;
+  //   }
+  
+  //   if (state.status === "success") {
+  //     alert(state.message);
+  //   }
+  // }, [state]);
+  
+  async function onSubmit(values) {
+    await getQuestions(values)
   }
 
-  const buildSurahNameOptions = () => {
-    return SurahData.map((key, index) => <SelectItem value={key[5]} key={key}>{`${index+1} -- ${key[5]} -- ${key[4]}`}</SelectItem>);
+  const buildSurahNameOptions = (isLimited) => {
+    const surahName = useWatch({name: 'fromSurah'})
+    let surahIndex;
+
+    if (isLimited) {
+      surahIndex = SurahData.findIndex((surah) => {
+        return surah[5] === surahName;
+      })
+    }
+
+    return SurahData.map((key, index) => 
+      <SelectItem 
+        disabled={index < surahIndex}
+        value={key[5]}
+        key={key}
+      >
+        {`${index+1} -- ${key[5]} -- ${key[4]}`}
+      </SelectItem>
+    )
   }
   
   const buildAyahOptions = (fromOrTo) => {
-    const surahName = useWatch({
-      name: (fromOrTo === 'from') ? 'fromSurah' : 'toSurah'
-    })
+    const { fromSurah, fromAyah, toSurah, toAyah } = useWatch([])
 
-    if (!surahName) return [];
+    if (!fromSurah) return [];
 
     let options = [];
-    let surahData = SurahData.filter(surah => (surah[5] === surahName))[0];
+    let surahData = SurahData.filter(surah => (surah[5] === fromSurah))[0];
 
     for (let i = 1; i <= surahData[1]; i++) {
-      options.push(<SelectItem key={i} value={i+''}>{i+''}</SelectItem>)
+      options.push(
+      <SelectItem
+        disabled={
+          (i < fromAyah) && 
+          (fromOrTo === 'to') &&
+          (fromSurah === toSurah)
+        }
+        key={i}
+        value={i+''}
+      >
+        {i+''}
+      </SelectItem>)
     }
 
     return options;
@@ -84,7 +125,7 @@ const ReviewInputForm = () => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                    {buildSurahNameOptions()}
+                    {buildSurahNameOptions(false)}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -103,7 +144,7 @@ const ReviewInputForm = () => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                    {buildAyahOptions('from')}
+                    {buildAyahOptions('from', false)}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -125,7 +166,7 @@ const ReviewInputForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {buildSurahNameOptions()}
+                        {buildSurahNameOptions(true)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -144,7 +185,7 @@ const ReviewInputForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {buildAyahOptions('to')}
+                        {buildAyahOptions('to', true)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -154,7 +195,7 @@ const ReviewInputForm = () => {
           </>
           : null
         }
-        <Button className='mt-3' type="submit">Submit</Button>
+        <Button className='mt-3' type="submit">Next</Button>
       </form>
     </Form>
   )
