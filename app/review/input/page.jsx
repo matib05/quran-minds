@@ -1,7 +1,12 @@
+import ReviewInputForm from "@/components/reviewInputForm"
 
 const ReviewInput = () => {
+
+
   return (
-    <div>ReviewInput</div>
+    <div>
+      <ReviewInputForm />
+    </div>
   )
 }
 
