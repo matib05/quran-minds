@@ -46,6 +46,7 @@ const ReviewInputForm = () => {
     resolver: zodResolver(FormSchema),
   });
   const [state, formAction] = useFormState(getQuestions, {error: null});
+  let { fromSurah, fromAyah, toSurah, toAyah } = useWatch({control: form.control})
 
 
   // useEffect(() => {
@@ -63,12 +64,11 @@ const ReviewInputForm = () => {
   }
 
   const buildSurahNameOptions = (isLimited) => {
-    const surahName = useWatch({name: 'fromSurah'})
     let surahIndex;
 
     if (isLimited) {
       surahIndex = SurahData.findIndex((surah) => {
-        return surah[5] === surahName;
+        return surah[5] === fromSurah;
       })
     }
 
@@ -84,12 +84,13 @@ const ReviewInputForm = () => {
   }
   
   const buildAyahOptions = (fromOrTo) => {
-    const { fromSurah, fromAyah, toSurah, toAyah } = useWatch([])
 
     if (!fromSurah) return [];
 
     let options = [];
-    let surahData = SurahData.filter(surah => (surah[5] === fromSurah))[0];
+    let surahData = SurahData.filter(surah => (surah[5] === (fromOrTo === 'from' ? fromSurah : toSurah)))[0];
+
+    if (!surahData) return []
 
     for (let i = 1; i <= surahData[1]; i++) {
       options.push(
@@ -144,7 +145,7 @@ const ReviewInputForm = () => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                    {buildAyahOptions('from', false)}
+                    {buildAyahOptions('from')}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -185,7 +186,7 @@ const ReviewInputForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {buildAyahOptions('to', true)}
+                        {buildAyahOptions('to')}
                     </SelectContent>
                   </Select>
                   <FormMessage />
