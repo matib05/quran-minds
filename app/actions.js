@@ -1,10 +1,9 @@
 'use server'
+
 import prisma from '@/lib/prisma';
-import { SurahData } from '@/utils/SurahData';
+import { SurahData } from '@/resources/SurahData';
 
-
-
-export async function getQuestions(formData) {
+export async function getQuestionsBySurah(formData) {
     const { fromSurah, fromAyah, toSurah, toAyah } = formData;
     let fromSurahNumber = convertSurahNametoNumber(fromSurah)
     let toSurahNumber = convertSurahNametoNumber(toSurah)
@@ -53,6 +52,27 @@ export async function getQuestions(formData) {
                             }
                         ]   
                     }
+                ]
+            }
+        })
+
+    } catch (error) {
+        console.error(error)
+    }
+    console.log(ayaat);
+    return {error: false};
+}
+
+export async function getQuestionsByJuz(formData) {
+    const { fromJuz, toJuz } = formData;
+
+    let ayaat;
+    try {
+        ayaat = await prisma.ayah.findMany({
+            where: {
+                AND: [
+                    { juzNumber: { gte: parseInt(toJuz) }},
+                    { juzNumber: { lte: parseInt(fromJuz) }},
                 ]
             }
         })

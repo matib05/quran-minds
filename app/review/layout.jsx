@@ -2,9 +2,11 @@ import React from 'react'
 
 const ReviewLayout = ({children}) => {
   return (
-    <div
-      className='flex items-center text-center justify-center mt-10 mx-3'
-    >{children}</div>
+    <section className='w-full'>
+        <div className='flex items-center justify-center'>
+            {children}
+        </div>
+    </section>
   )
 }
 
