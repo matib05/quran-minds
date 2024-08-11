@@ -29,7 +29,6 @@ async function getQuranData() {
 }
 
 async function main(quran) {
-    console.log(typeof quran);
     const quranData = await prisma.Ayah.createMany({
         data: quran
     });
