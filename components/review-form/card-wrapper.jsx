@@ -12,7 +12,7 @@ import BackButton from "./back-button";
 
 const CardWrapper = ({label, title, backButtonHref, backButtonLabel, children}) => {
   return (
-    <Card className="w-1/2 shadow-md">
+    <Card className="shadow-md">
         <CardHeader>
           <ReviewHeader label={label} title={title} />
         </CardHeader>
