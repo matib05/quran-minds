@@ -1,8 +1,7 @@
 'use server'
+
 import prisma from '@/lib/prisma';
 import { SurahData } from '@/resources/SurahData';
-
-
 
 export async function getQuestionsBySurah(formData) {
     const { fromSurah, fromAyah, toSurah, toAyah } = formData;

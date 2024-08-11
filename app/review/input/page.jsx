@@ -1,7 +1,6 @@
 import CardWrapper from "@/components/review-form/card-wrapper";
 import Link from "next/link";
 
-
 const ReviewInputPage = () => {
     return (
         <CardWrapper 
