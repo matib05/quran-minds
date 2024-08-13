@@ -1,4 +1,6 @@
 import React from 'react'
+import { Toaster } from "@/components/ui/toaster"
+
 
 const ReviewLayout = ({children}) => {
   return (
@@ -6,6 +8,7 @@ const ReviewLayout = ({children}) => {
         <div className='flex items-center justify-center'>
             {children}
         </div>
+        <Toaster />
     </section>
   )
 }
