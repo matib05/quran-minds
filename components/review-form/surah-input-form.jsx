@@ -3,9 +3,8 @@
 import CardWrapper from './card-wrapper'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
-import { useFormStatus } from "react-dom";
 import { z } from "zod"
-
+import { useServerAction } from "zsa-react";
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -23,8 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { SurahData } from '@/resources/SurahData'
-import { getQuestions } from '@/app/actions'
-import { useState } from 'react';
+import { getQuestionsBySurahAction } from '@/app/actions'
+import { useToast } from "@/components/ui/use-toast"
 
 
 const FormSchema = z.object({
@@ -43,16 +42,29 @@ const FormSchema = z.object({
 })
 
 const SurahInputForm = () => {
-  const [loading, setLoading] = useState(false);
   const form = useForm({
     resolver: zodResolver(FormSchema),
   });
   let { fromSurah, fromAyah, toSurah, toAyah } = useWatch({control: form.control});
-  const { pending } = useFormStatus();
-  
+  const { isPending, execute, data, error } = useServerAction(getQuestionsBySurahAction);
+  const { toast } = useToast()
+
+
+
   async function onSubmit(values) {
-    setLoading(true);
-    await getQuestions(values)
+    console.log(values);
+    const [data, err] = await execute(values) 
+    if (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request. Try again later.",
+      });
+      return
+    }
+
+    form.reset()
   }
 
   const buildSurahNameOptions = (isLimited) => {
@@ -193,8 +205,8 @@ const SurahInputForm = () => {
             </>
             : null
           }
-          <Button type="submit" className="w-full" disabled={pending}>
-            {loading ? "Loading..." : "Next"}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Loading..." : "Next"}
           </Button>
         </form>
       </Form>
