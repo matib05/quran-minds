@@ -3,9 +3,8 @@
 import CardWrapper from './card-wrapper'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
-import { useFormStatus } from "react-dom";
 import { z } from "zod"
-
+import { useServerAction } from 'zsa-react'
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -22,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { getQuestionsByJuz } from '@/app/actions'
-import { useState } from 'react';
+import { getQuestionsByJuzAction } from '@/app/actions'
+import { useToast } from "@/components/ui/use-toast"
 
 const juzNumbers = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -41,16 +40,27 @@ const FormSchema = z.object({
 })
 
 const JuzInputForm = () => {
-  const [loading, setLoading] = useState(false);
   const form = useForm({
     resolver: zodResolver(FormSchema),
   });
   let { fromJuz, toJuz } = useWatch({control: form.control});
-  const { pending } = useFormStatus();
+  const { isPending, execute, data, error } = useServerAction(getQuestionsByJuzAction);
+  const { toast } = useToast()
   
   async function onSubmit(values) {
-    setLoading(true);
-    await getQuestionsByJuz(values)
+    console.log(values);
+    const [data, err] = await execute(values) 
+    if (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request. Try again later.",
+      });
+      return
+    }
+
+    form.reset()
   }
 
   const buildJuzNameOptions = (isLimited) => {
@@ -122,12 +132,12 @@ const JuzInputForm = () => {
                     <FormMessage />
                 </FormItem>
                 )}
-            /> :
-            null
+            /> 
+            : null
           }
 
-          <Button type="submit" className="w-full" disabled={pending}>
-            {loading ? "Loading..." : "Next"}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Loading..." : "Next"}
           </Button>
         </form>
       </Form>
