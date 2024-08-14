@@ -58,11 +58,9 @@ export const getQuestionsBySurahAction = createServerAction()
         if (!filteredAyaat.length) throw new Error('Ayaat not found');
 
         return appendQuestionData(filteredAyaat);
-
-        redirect('/review/input')
     })
 
-export async function getQuestionsByJuz(formData) {
+export async function getQuestionsByJuzAction(formData) {
     const { fromJuz, toJuz } = formData;
 
     let ayaat;
@@ -70,22 +68,21 @@ export async function getQuestionsByJuz(formData) {
         ayaat = await prisma.ayah.findMany({
             where: {
                 AND: [
-                    { juzNumber: { gte: parseInt(toJuz) }},
-                    { juzNumber: { lte: parseInt(fromJuz) }},
+                    { juzNumber: { gte: parseInt(fromJuz) }},
+                    { juzNumber: { lte: parseInt(toJuz) }},
                 ]
             }
         })
-
     } catch (error) {
         console.error(error)
     }
-    return {error: false};
+    return appendQuestionData(ayaat)
 }
 
 const appendQuestionData = (ayaat) => {
-    const randomAyat =  randoSequence(ayaat).slice(0, (ayaat.length > 10) ? 10 : ayaat.length-1);
+    const randomAyat = randoSequence(ayaat).slice(0, (ayaat.length > 10) ? 10 : ayaat.length-1);
 
-    //@TODO: add other question types: rando('guessSurah', 'fillInBlank', 'matchWords'),
+    //@TODO: add other question types: rando('guessSurah', 'fillInBlank', 'matchWords', 'guessBeforeAfter'),
     const questionType = 'guessSurah'; 
 
     const data = randomAyat.map(({index, value}) => {
@@ -99,7 +96,6 @@ const appendQuestionData = (ayaat) => {
     return data;
 }
 const generateAnswers = (questionType, correctAnswer) => {
-    console.log('hello')
     switch (questionType) {
         case 'guessSurah':
             let surahDataWithoutCorrectAnswer = SurahData.slice(0, correctAnswer-1).concat(SurahData.slice(correctAnswer));

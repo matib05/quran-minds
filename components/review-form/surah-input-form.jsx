@@ -49,8 +49,6 @@ const SurahInputForm = () => {
   const { isPending, execute, data, error } = useServerAction(getQuestionsBySurahAction);
   const { toast } = useToast()
 
-
-
   async function onSubmit(values) {
     console.log(values);
     const [data, err] = await execute(values) 
