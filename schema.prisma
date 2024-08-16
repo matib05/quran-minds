@@ -21,12 +21,13 @@ model User {
 }
 
 model Ayah {
-  id          String @default(cuid()) @id
-  juzNumber   Int
-  surahName   String
-  surahNumber Int
-  ayahNumber  Int
-  ayah        String
+  id              String @default(cuid()) @id
+  juzNumber       Int
+  surahName       String
+  arabicSurahName String
+  surahNumber     Int
+  ayahNumber      Int
+  ayah            String
 }
 
 model Page {
