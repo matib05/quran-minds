@@ -14,14 +14,20 @@ async function getQuranData() {
 
     let quranDataToSave = [];
 
+    let incrementSurahNumber = 1;
     for await (const line of rl) {
         lineSplit = line.split('|');
+        let surahNumber = parseInt(lineSplit[2]);
+        if (incrementSurahNumber !== surahNumber) {
+            incrementSurahNumber = surahNumber;
+        }
         quranDataToSave.push({
             juzNumber: parseInt(lineSplit[0]),
             surahName: lineSplit[1],
+            arabicSurahName: SurahData[incrementSurahNumber-1][4],
             surahNumber: parseInt(lineSplit[2]),
             ayahNumber: parseInt(lineSplit[3]),
-            ayah: lineSplit[4]
+            ayah: lineSplit[4],
         })
     }
 
