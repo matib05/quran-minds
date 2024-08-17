@@ -1,5 +1,6 @@
 "use client"
 
+import { useGlobalContext } from '@/app/Context/store';
 import CardWrapper from './card-wrapper'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -40,6 +41,7 @@ const FormSchema = z.object({
 })
 
 const JuzInputForm = () => {
+  const { setFromJuz, setToJuz, setQuestions } = useGlobalContext();
   const form = useForm({
     resolver: zodResolver(FormSchema),
   });
@@ -49,7 +51,10 @@ const JuzInputForm = () => {
   
   async function onSubmit(values) {
     console.log(values);
+    setFromJuz(fromJuz)
+    setToJuz(toJuz)
     const [data, err] = await execute(values) 
+
     if (err) {
       console.error(err);
       toast({
@@ -60,7 +65,7 @@ const JuzInputForm = () => {
       return
     }
 
-    form.reset()
+    setQuestions(data);
   }
 
   const buildJuzNameOptions = (isLimited) => {

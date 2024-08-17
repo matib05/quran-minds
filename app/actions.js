@@ -58,29 +58,37 @@ export const getQuestionsBySurahAction = createServerAction()
 
         if (!filteredAyaat.length) throw new Error('Ayaat not found');
 
-        return appendQuestionData(filteredAyaat);
+        return generateQuestionData(filteredAyaat);
     })
 
-export async function getQuestionsByJuzAction(formData) {
-    const { fromJuz, toJuz } = formData;
-
-    let ayaat;
-    try {
-        ayaat = await prisma.ayah.findMany({
-            where: {
-                AND: [
-                    { juzNumber: { gte: parseInt(fromJuz) }},
-                    { juzNumber: { lte: parseInt(toJuz) }},
-                ]
-            }
-        })
-    } catch (error) {
-        console.error(error)
-    }
-    return appendQuestionData(ayaat)
-}
-
-const appendQuestionData = (ayaat) => {
+export const getQuestionsByJuzAction = createServerAction()
+    .input(
+        z.object({
+            fromJuz: z.string({
+                required_error: "Please select the beginning portion of your review.",
+            }),
+            toJuz: z.string({
+                required_error: "Please select the ending portion of your review.",
+            }),
+        }),
+    ).handler(async ({input: {fromJuz, toJuz }}) => {
+        let ayaat;
+        try {
+            ayaat = await prisma.ayah.findMany({
+                where: {
+                    AND: [
+                        { juzNumber: { gte: parseInt(fromJuz) }},
+                        { juzNumber: { lte: parseInt(toJuz) }},
+                    ]
+                }
+            })
+        } catch (error) {
+            console.error(error)
+        }
+        return generateQuestionData(ayaat)
+    })
+    
+const generateQuestionData = (ayaat) => {
     const randomAyat = randoSequence(ayaat).slice(0, (ayaat.length > 10) ? 10 : ayaat.length-1);
 
     //@TODO: add other question types: rando('guessSurah', 'fillInBlank', 'matchWords', 'guessBeforeAfter'),
@@ -96,6 +104,7 @@ const appendQuestionData = (ayaat) => {
     })
     return data;
 }
+
 const generateAnswers = (questionType, correctAnswer) => {
     switch (questionType) {
         case 'guessSurah':
