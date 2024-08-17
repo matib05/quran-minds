@@ -1,5 +1,6 @@
 "use client"
 
+import { useGlobalContext } from '@/app/Context/store';
 import CardWrapper from './card-wrapper'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -42,6 +43,7 @@ const FormSchema = z.object({
 })
 
 const SurahInputForm = () => {
+  const {setFromSurah, setFromAyah, setToSurah, setToAyah, setQuestions } = useGlobalContext();
   const form = useForm({
     resolver: zodResolver(FormSchema),
   });
@@ -51,6 +53,10 @@ const SurahInputForm = () => {
 
   async function onSubmit(values) {
     console.log(values);
+    setFromSurah(fromSurah)
+    setFromAyah(fromAyah)
+    setToSurah(toSurah)
+    setToAyah(toAyah)
     const [data, err] = await execute(values) 
     if (err) {
       console.error(err);
@@ -62,7 +68,7 @@ const SurahInputForm = () => {
       return
     }
 
-    form.reset()
+    setQuestions(data);
   }
 
   const buildSurahNameOptions = (isLimited) => {
