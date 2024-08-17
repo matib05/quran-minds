@@ -5,6 +5,7 @@ import { SurahData } from '@/resources/SurahData';
 import { createServerAction } from "zsa"
 import z from 'zod';
 import { randoSequence} from '@nastyox/rando.js';
+import { sha3_256 } from 'js-sha3';
 
 
 export const getQuestionsBySurahAction = createServerAction()
@@ -83,14 +84,14 @@ const appendQuestionData = (ayaat) => {
     const randomAyat = randoSequence(ayaat).slice(0, (ayaat.length > 10) ? 10 : ayaat.length-1);
 
     //@TODO: add other question types: rando('guessSurah', 'fillInBlank', 'matchWords', 'guessBeforeAfter'),
-    const questionType = 'guessSurah'; 
+    const questionType = 'guessSurah';
 
     const data = randomAyat.map(({index, value}) => {
         return {
             questionType,
             question: value.ayah,
             answers: generateAnswers(questionType, value.surahNumber),
-            correctAnswer: SurahData[value.surahNumber-1][5]
+            correctAnswer: sha3_256(SurahData[value.surahNumber-1][5]),
         }
     })
     return data;
@@ -105,7 +106,7 @@ const generateAnswers = (questionType, correctAnswer) => {
             let randomizedAnswers = randoSequence(answers)
             return randomizedAnswers.map(surahData => {
                 //@TODO: generate arabic surah names, not english transliterations
-                return surahData.value[5] 
+                return surahData.value[4] 
             });
     }
 }
