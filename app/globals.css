@@ -10,6 +10,16 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Uthmani';
+  src: url("../resources/uthmanicscript.otf") format("opentype");
+}
+
+.uthmani {
+  font-family: 'Uthmani', serif;
+  font-size: 48px;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
