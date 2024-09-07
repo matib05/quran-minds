@@ -20,7 +20,7 @@ export const GlobalContextProvider = ({ children }) => {
     const [fromJuz, setFromJuz] = useState();
     const [toJuz, setToJuz] = useState();
     const [questions, setQuestions] = useState([]);
-    const [questionNumber, setQuestionNumber] = useState();
+    const [questionNumber, setQuestionNumber] = useState(0);
     const [correct, setCorrect] = useState([]);
     const [incorrect, setIncorrect] = useState([]);
 
