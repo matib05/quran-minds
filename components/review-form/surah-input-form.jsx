@@ -25,6 +25,7 @@ import {
 import { SurahData } from '@/resources/SurahData'
 import { getQuestionsBySurahAction } from '@/app/actions'
 import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from 'next/navigation'
 
 
 const FormSchema = z.object({
@@ -50,6 +51,7 @@ const SurahInputForm = () => {
   let { fromSurah, fromAyah, toSurah, toAyah } = useWatch({control: form.control});
   const { isPending, execute, data, error } = useServerAction(getQuestionsBySurahAction);
   const { toast } = useToast()
+  const router = useRouter()
 
   async function onSubmit(values) {
     console.log(values);
@@ -69,6 +71,7 @@ const SurahInputForm = () => {
     }
 
     setQuestions(data);
+    router.push('/review/quiz')
   }
 
   const buildSurahNameOptions = (isLimited) => {
