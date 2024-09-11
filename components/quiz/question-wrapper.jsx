@@ -24,7 +24,7 @@ const QuestionWrapper = () => {
     <Card className="shadow-md">
         <CardHeader>
             <div dir="rtl" className='w-full flex flex-col gap-y-4'>
-                <h1 className='text-xl uthmani text-center'>
+                <h1 className='text-xl leading-normal uthmani text-center'>
                     {questions[questionNumber]?.question ?? ''}
                 </h1>
             </div>
