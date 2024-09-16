@@ -1,18 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
-.noto-naskh-arabic {
-  font-family: "Noto Naskh Arabic", serif;
-  font-optical-sizing: auto;
-  font-style: normal;
-}
-
 @font-face {
   font-family: 'Uthmani';
-  src: url("../resources/uthmanicscript.otf") format("opentype");
+  src: url("../public/uthmanicscript.otf") format("opentype");
 }
 
 .uthmani {
