@@ -99,7 +99,7 @@ const generateQuestionData = (ayaat) => {
             questionType,
             question: value.ayah,
             answers: generateAnswers(questionType, value.surahNumber),
-            correctAnswer: sha3_256(SurahData[value.surahNumber-1][5]),
+            correctAnswer: sha3_256(SurahData[value.surahNumber-1][4]),
         }
     })
     return data;
