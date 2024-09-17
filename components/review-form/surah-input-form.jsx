@@ -54,7 +54,6 @@ const SurahInputForm = () => {
   const router = useRouter()
 
   async function onSubmit(values) {
-    console.log(values);
     setFromSurah(fromSurah)
     setFromAyah(fromAyah)
     setToSurah(toSurah)
