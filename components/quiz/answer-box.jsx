@@ -9,12 +9,25 @@ const AnswerBox = ({
   nextQuestion = () => console.log('here'),
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isCheckAnwer, setIsCheckAnwer] = useState(false)
 
   const handleAnswerClick = (index) => {
     if (!isSubmitted) {
       setSelectedAnswer(index)
+    }
+  }
+
+  const handleSubmitQuestion = () => {
+    //@TODO: save user answer
+    setIsSubmitted(true);
+    let userAnswer = sha3_256(answers[selectedAnswer])
+    if (userAnswer === correctAnswer) {
+      setIsCorrectAnswer(true)
+    }
+    if (userAnswer !== correctAnswer) {
+      setIsCorrectAnswer(false)
     }
   }
 
@@ -44,6 +57,11 @@ const AnswerBox = ({
       {selectedAnswer !== null && !isSubmitted && (
         <p className="mb-4 text-lg font-semibold text-yellow-600 text-center">Final Answer?</p>
       )}
+      {isSubmitted && (
+        <p className={`mb-4 text-lg font-semibold ${isCorrectAnswer ? 'text-green-400' : 'text-red-400'} text-center`}>
+          {isCorrectAnswer ? 'Correct!' : 'Incorrect!'}
+        </p>
+      )}
       <div className="space-y-4">
         {answers.map((answer, index) => (
           <div
@@ -55,10 +73,10 @@ const AnswerBox = ({
           </div>
         ))}
       </div>
-      {isSubmitted && (
+      {selectedAnswer !== null && (
           <Button
             className="mt-6 w-full"
-            onClick={setIsSubmitted(true)}
+            onClick={() => handleSubmitQuestion()}
             disabled={selectedAnswer === null}
           >
             Submit
