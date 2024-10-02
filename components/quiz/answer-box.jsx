@@ -5,25 +5,24 @@ import { sha3_256 } from 'js-sha3';
 const AnswerBox = ({
   questionType = "guessSurah",
   answers = ["London", "Berlin", "Paris", "Madrid"],
-  correctAnswer = 'randomString'
+  correctAnswer = 'randomString',
+  nextQuestion = () => console.log('here'),
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isCheckAnwer, setIsCheckAnwer] = useState(false)
 
   const handleAnswerClick = (index) => {
-    console.log(answers);
-    answers.map(surah => {
-      console.log(surah);
-      console.log(sha3_256(surah));
-    })
-    console.log('correctAnswer', correctAnswer);
     if (!isSubmitted) {
       setSelectedAnswer(index)
     }
   }
 
-  const handleSubmit = () => {
-    setIsSubmitted(true)
+  const handleNextQuestion = () => {
+    setIsSubmitted(false)
+    setIsCheckAnwer(false);
+    setSelectedAnswer(null);
+    nextQuestion();
   }
 
   const getAnswerStyle = (index) => {
@@ -56,13 +55,23 @@ const AnswerBox = ({
           </div>
         ))}
       </div>
-      <Button
-        className="mt-6 w-full"
-        onClick={handleSubmit}
-        disabled={selectedAnswer === null || isSubmitted}
-      >
-        Submit
-      </Button>
+      {isSubmitted && (
+          <Button
+            className="mt-6 w-full"
+            onClick={setIsSubmitted(true)}
+            disabled={selectedAnswer === null}
+          >
+            Submit
+          </Button>
+      )}
+      {isCheckAnwer && (
+        <Button
+          className="mt-6 w-full"
+          onClick={handleNextQuestion(true)}
+        >
+          Next
+        </Button>
+      )}
     </div>
   )
 }
