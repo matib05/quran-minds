@@ -58,7 +58,8 @@ const SurahInputForm = () => {
     setFromAyah(fromAyah)
     setToSurah(toSurah)
     setToAyah(toAyah)
-    const [data, err] = await execute(values) 
+    const [data, err] = await execute(values);
+    
     if (err) {
       console.error(err);
       toast({

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select"
 import { getQuestionsByJuzAction } from '@/app/actions'
 import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from 'next/navigation'
 
 const juzNumbers = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -47,13 +48,13 @@ const JuzInputForm = () => {
   });
   let { fromJuz, toJuz } = useWatch({control: form.control});
   const { isPending, execute, data, error } = useServerAction(getQuestionsByJuzAction);
-  const { toast } = useToast()
+  const { toast } = useToast();
+  const router = useRouter();
   
   async function onSubmit(values) {
-    console.log(values);
     setFromJuz(fromJuz)
     setToJuz(toJuz)
-    const [data, err] = await execute(values) 
+    const [data, err] = await execute(values);
 
     if (err) {
       console.error(err);
@@ -66,6 +67,7 @@ const JuzInputForm = () => {
     }
 
     setQuestions(data);
+    router.push('/review/quiz')
   }
 
   const buildJuzNameOptions = (isLimited) => {
