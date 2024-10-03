@@ -11,7 +11,7 @@ const AnswerBox = ({
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [isCorrectAnswer, setIsCorrectAnswer] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [isCheckAnwer, setIsCheckAnwer] = useState(false)
+  const [isCheckAnswer, setIsCheckAnswer] = useState(false)
 
   const handleAnswerClick = (index) => {
     if (!isSubmitted) {
@@ -22,6 +22,7 @@ const AnswerBox = ({
   const handleSubmitQuestion = () => {
     //@TODO: save user answer
     setIsSubmitted(true);
+    setIsCheckAnswer(true);
     let userAnswer = sha3_256(answers[selectedAnswer])
     if (userAnswer === correctAnswer) {
       setIsCorrectAnswer(true)
@@ -33,7 +34,7 @@ const AnswerBox = ({
 
   const handleNextQuestion = () => {
     setIsSubmitted(false)
-    setIsCheckAnwer(false);
+    setIsCheckAnswer(false)
     setSelectedAnswer(null);
     nextQuestion();
   }
@@ -73,7 +74,7 @@ const AnswerBox = ({
           </div>
         ))}
       </div>
-      {selectedAnswer !== null && (
+      {(selectedAnswer !== null && !isSubmitted && !isCheckAnswer ) ? (
           <Button
             className="mt-6 w-full"
             onClick={() => handleSubmitQuestion()}
@@ -81,15 +82,16 @@ const AnswerBox = ({
           >
             Submit
           </Button>
-      )}
-      {isCheckAnwer && (
+      ) :
+      (selectedAnswer !== null && isSubmitted && isCheckAnswer ) ? (
         <Button
           className="mt-6 w-full"
-          onClick={handleNextQuestion(true)}
+          onClick={() => handleNextQuestion()}
         >
           Next
         </Button>
-      )}
+      ) : ''
+    }
     </div>
   )
 }

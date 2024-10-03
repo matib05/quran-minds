@@ -20,7 +20,10 @@ const QuestionWrapper = () => {
     }
   }
   const handleNextQuestion = () => {
-    setQuestionIndex(questionIndex+1);
+    if (questionIndex < questions.length) {
+      setQuestionIndex(questionIndex+1);
+    }
+    
   }
 
   return (
