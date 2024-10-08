@@ -23,6 +23,9 @@ const QuestionWrapper = () => {
     if (questionIndex < questions.length) {
       setQuestionIndex(questionIndex+1);
     }
+    else {
+      // display report
+    }
     
   }
 
