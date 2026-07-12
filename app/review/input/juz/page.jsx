@@ -1,9 +1,7 @@
-import JuzInputForm from '@/components/review-form/juz-input-form'
+import { redirect } from 'next/navigation'
 
 const JuzPage = () => {
-  return (
-    <JuzInputForm />
-  )
+  redirect('/practice')
 }
 
 export default JuzPage

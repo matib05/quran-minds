@@ -1,9 +1,7 @@
-import QuestionWrapper from "@/components/quiz/question-wrapper";
+import { redirect } from "next/navigation";
 
 const QuizPage = () => {
-    return (
-        <QuestionWrapper />      
-    )
+    redirect('/practice')
   }
   
   export default QuizPage

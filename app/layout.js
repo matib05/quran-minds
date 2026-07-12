@@ -1,17 +1,14 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata = {
-  title: "Quran Minds",
-  description: "Created by Mindstech",
+  title: { default: "Quran Minds", template: "%s · Quran Minds" },
+  description: "Precise Quran memorization, review, and progress tracking for students, families, and teachers.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

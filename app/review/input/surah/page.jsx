@@ -1,10 +1,8 @@
-import SurahInputForm from '@/components/review-form/surah-input-form'
+import { redirect } from 'next/navigation'
 
 
 const SurahPage = () => {
-  return (
-    <SurahInputForm />
-  )
+  redirect('/practice')
 }
 
 export default SurahPage

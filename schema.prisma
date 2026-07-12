@@ -5,34 +5,195 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
 model User {
-  id            String    @default(cuid()) @id
-  name          String?
-  email         String?   @unique
-  school        String?
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  id             String            @id @default(cuid())
+  name           String?
+  email          String?           @unique
+  role           Role              @default(STUDENT)
+  memberships    Membership[]
+  studentProfile StudentProfile?
+  guardianLinks  GuardianStudent[] @relation("Guardian")
+  markedMistakes Mistake[]         @relation("MarkedBy")
+  createdAt      DateTime          @default(now()) @map(name: "created_at")
+  updatedAt      DateTime          @updatedAt @map(name: "updated_at")
+
   @@map(name: "users")
 }
 
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  GUARDIAN
+}
+
+enum PortionType {
+  SABAQ
+  SABQI
+  MANZIL
+}
+
+enum Grade {
+  GREEN
+  YELLOW
+  RED
+}
+
+enum MistakeType {
+  HARAKAH
+  LETTER
+  MUTASHABIHAT
+  PROMPTED
+  STOP_START
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  timezone    String       @default("America/New_York")
+  memberships Membership[]
+  terms       Term[]
+  createdAt   DateTime     @default(now())
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId, role])
+}
+
+model Term {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String
+  startsOn       DateTime
+  endsOn         DateTime
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions       HalaqahSession[]
+}
+
+model StudentProfile {
+  id             String             @id @default(cuid())
+  userId         String             @unique
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guardians      GuardianStudent[]  @relation("Student")
+  assignments    Assignment[]
+  records        RecitationRecord[]
+  practiceEvents PracticeEvent[]
+}
+
+model GuardianStudent {
+  id         String         @id @default(cuid())
+  guardianId String
+  studentId  String
+  guardian   User           @relation("Guardian", fields: [guardianId], references: [id], onDelete: Cascade)
+  student    StudentProfile @relation("Student", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([guardianId, studentId])
+}
+
+model HalaqahSession {
+  id        String             @id @default(cuid())
+  termId    String
+  teacherId String
+  startsAt  DateTime
+  endedAt   DateTime?
+  term      Term               @relation(fields: [termId], references: [id], onDelete: Cascade)
+  records   RecitationRecord[]
+}
+
+model Assignment {
+  id          String             @id @default(cuid())
+  studentId   String
+  type        PortionType
+  fromSurah   Int
+  fromAyah    Int
+  toSurah     Int
+  toAyah      Int
+  assignedFor DateTime
+  completedAt DateTime?
+  student     StudentProfile     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  records     RecitationRecord[]
+
+  @@index([studentId, assignedFor])
+}
+
+model RecitationRecord {
+  id           String          @id @default(cuid())
+  studentId    String
+  assignmentId String?
+  sessionId    String?
+  type         PortionType
+  grade        Grade
+  recordedAt   DateTime        @default(now())
+  note         String?
+  student      StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignment   Assignment?     @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  session      HalaqahSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  mistakes     Mistake[]
+
+  @@index([studentId, type, recordedAt])
+}
+
+model Mistake {
+  id           String           @id @default(cuid())
+  recordId     String
+  markedById   String
+  type         MistakeType
+  surahNumber  Int
+  ayahNumber   Int
+  wordIndex    Int
+  pageNumber   Int?
+  lineNumber   Int?
+  wordSnapshot String
+  note         String?
+  repairedAt   DateTime?
+  record       RecitationRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  markedBy     User             @relation("MarkedBy", fields: [markedById], references: [id])
+  practice     PracticeEvent[]
+
+  @@index([recordId, surahNumber, ayahNumber])
+}
+
+model PracticeEvent {
+  id          String         @id @default(cuid())
+  studentId   String
+  mistakeId   String?
+  activity    String
+  result      String
+  attemptedAt DateTime       @default(now())
+  nextDueAt   DateTime?
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  mistake     Mistake?       @relation(fields: [mistakeId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, nextDueAt])
+}
+
 model Ayah {
-  id              String @default(cuid()) @id
+  id              String @id @default(cuid())
   juzNumber       Int
   surahName       String
   arabicSurahName String
   surahNumber     Int
   ayahNumber      Int
   ayah            String
+
+  @@unique([surahNumber, ayahNumber])
 }
 
 model Page {
-  id               String @default(cuid()) @id
-  pageSurahNumber  Int
-  pageAyahNumber   Int
-  pageNumber       Int
+  id              String @id @default(cuid())
+  pageSurahNumber Int
+  pageAyahNumber  Int
+  pageNumber      Int
 }
