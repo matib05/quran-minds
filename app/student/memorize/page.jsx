@@ -17,13 +17,14 @@ const repo = getQuranRepository();
  */
 export default async function MemorizePage({ searchParams }) {
   const { student } = await requireStudent();
+  const query = await searchParams;
 
   const sabaq = await prisma.assignment.findFirst({
     where: { studentId: student.id, category: 'SABAQ', active: true },
   });
 
-  const surahNumber = Number(searchParams?.surah) || null;
-  const pageNumber = Number(searchParams?.page) || null;
+  const surahNumber = Number(query?.surah) || null;
+  const pageNumber = Number(query?.page) || null;
 
   let selection = null;
   if (pageNumber) {

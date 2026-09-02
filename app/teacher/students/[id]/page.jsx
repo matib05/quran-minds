@@ -12,33 +12,35 @@ export const dynamic = 'force-dynamic';
 const repo = getQuranRepository();
 
 export async function generateMetadata({ params }) {
+  const { id } = await params;
   const s = await prisma.studentProfile.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { user: { select: { name: true } } },
   });
   return { title: s?.user.name ?? 'Student' };
 }
 
 export default async function StudentPage({ params }) {
+  const { id } = await params;
   const user = await requireRole('TEACHER', 'ADMIN');
-  if (!(await canAccessStudent(user, params.id))) notFound();
+  if (!(await canAccessStudent(user, id))) notFound();
 
-  const snapshot = await studentSnapshot(params.id, { days: 30 });
+  const snapshot = await studentSnapshot(id, { days: 30 });
   if (!snapshot) notFound();
 
   const [pageWeakness, due, progressRows, recentMistakes] = await Promise.all([
     prisma.weaknessScore.findMany({
-      where: { studentId: params.id, level: 'PAGE' },
+      where: { studentId: id, level: 'PAGE' },
       orderBy: { score: 'desc' },
       take: 6,
     }),
-    dueForRevision(prisma, params.id, { limit: 40 }),
+    dueForRevision(prisma, id, { limit: 40 }),
     prisma.ayahProgress.findMany({
-      where: { studentId: params.id },
+      where: { studentId: id },
       select: { juz: true, page: true, state: true },
     }),
     prisma.mistake.findMany({
-      where: { studentId: params.id },
+      where: { studentId: id },
       orderBy: { createdAt: 'desc' },
       take: 8,
       include: { teacher: { select: { name: true } } },

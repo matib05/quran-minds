@@ -7,6 +7,7 @@ export const metadata = { title: 'Students' };
 export const dynamic = 'force-dynamic';
 
 export default async function TeacherDashboard({ searchParams }) {
+  const filters = await searchParams;
   const user = await requireRole('TEACHER', 'ADMIN');
   const students = await visibleStudents(user);
   const snapshots = (await rosterSnapshots(students)).filter(Boolean);
@@ -58,7 +59,7 @@ export default async function TeacherDashboard({ searchParams }) {
         </section>
       ) : null}
 
-      <RosterTable snapshots={serialize(snapshots)} classes={classes} initialFilters={searchParams} />
+      <RosterTable snapshots={serialize(snapshots)} classes={classes} initialFilters={filters} />
     </div>
   );
 }

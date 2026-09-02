@@ -9,14 +9,16 @@ export const dynamic = 'force-dynamic';
 const repo = getQuranRepository();
 
 export async function generateMetadata({ params }) {
-  return { title: `Mushaf page ${params.page}` };
+  const { page } = await params;
+  return { title: `Mushaf page ${page}` };
 }
 
 /** A plain, readable mushaf for reference and for checking a reference. */
 export default async function MushafPage({ params }) {
+  const { page: pageParam } = await params;
   await requireRole('TEACHER', 'ADMIN');
 
-  const pageNumber = Number(params.page);
+  const pageNumber = Number(pageParam);
   const page = repo.getPage(pageNumber);
   if (!page) notFound();
 

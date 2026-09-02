@@ -39,9 +39,21 @@ export default function PracticeRunner({ plan, sessionId }) {
     [sessionId],
   );
 
-  const nextStage = () => setStageIndex((i) => i + 1);
+  const nextStage = () => {
+    setStageIndex((i) => {
+      const next = i + 1;
+      // Closing the session is the consequence of leaving the last stage, so
+      // trigger it here rather than from an effect watching `done` - a setState
+      // fired synchronously inside an effect cascades an extra render.
+      if (next >= plan.stages.length) finish();
+      return next;
+    });
+  };
 
+  const finishing_ = useRef(false);
   const finish = async () => {
+    if (finishing_.current) return;
+    finishing_.current = true;
     setFinishing(true);
     try {
       const s = await completePracticeSession(sessionId);
@@ -51,11 +63,6 @@ export default function PracticeRunner({ plan, sessionId }) {
       setFinishing(false);
     }
   };
-
-  useEffect(() => {
-    if (done && !summary && !finishing) finish();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done]);
 
   if (done) {
     return <Summary summary={summary} plan={plan} />;
@@ -99,6 +106,32 @@ function StageHeader({ plan, stageIndex, stage }) {
   );
 }
 
+/**
+ * A mutable timestamp that is never read or written during render.
+ * `useRef(Date.now())` would call an impure function while rendering.
+ */
+/**
+ * Milliseconds since the stopwatch ref was stamped.
+ *
+ * The ref starts null rather than at `Date.now()`: calling Date.now() while
+ * rendering is impure, and the first stamp always happens in a handler anyway.
+ */
+function elapsed(ref) {
+  if (ref.current === null) {
+    ref.current = Date.now();
+    return 0;
+  }
+  return Date.now() - ref.current;
+}
+
+function useStopwatch() {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current === null) ref.current = Date.now();
+  }, []);
+  return ref;
+}
+
 /* ------------------------------------------------------------------ 5-5-5 -- */
 
 const STEPS = [
@@ -118,7 +151,7 @@ function FiveByFive({ stage, onAttempt, onDone }) {
   const [index, setIndex] = useState(0);
   const [step, setStep] = useState(0);
   const [count, setCount] = useState(0);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef(null);
 
   const phrase = stage.phrases[index];
   if (!phrase) return <Continue onDone={onDone} label="Start the recall test" />;
@@ -141,7 +174,7 @@ function FiveByFive({ stage, onAttempt, onDone }) {
       correct: true,
       accuracy: 100,
       repetitions: target * STEPS.length,
-      durationMs: Date.now() - startedAt.current,
+      durationMs: elapsed(startedAt),
     });
     startedAt.current = Date.now();
     setStep(0);
@@ -241,7 +274,7 @@ function TypeFromMemory({ stage, onAttempt, onDone }) {
   const [studying, setStudying] = useState(true);
   const [keyboard, setKeyboard] = useState(false);
   const inputRef = useRef(null);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef(null);
 
   const item = stage.items[index];
   if (!item) return <Continue onDone={onDone} label="Continue" />;
@@ -253,7 +286,7 @@ function TypeFromMemory({ stage, onAttempt, onDone }) {
       verseKey: item.verseKey,
       typed,
       expected: item.expected,
-      durationMs: Date.now() - startedAt.current,
+      durationMs: elapsed(startedAt),
     });
     setResult(res);
   };
@@ -422,7 +455,7 @@ function TypeFromMemory({ stage, onAttempt, onDone }) {
 function ChoiceDrill({ stage, kind, onAttempt, onDone }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState(null);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef(null);
 
   const item = stage.items[index];
   if (!item) return <Continue onDone={onDone} label="Continue" />;
@@ -440,7 +473,7 @@ function ChoiceDrill({ stage, kind, onAttempt, onDone }) {
       verseKey: item.verseKey,
       correct,
       accuracy: correct ? 100 : 0,
-      durationMs: Date.now() - startedAt.current,
+      durationMs: elapsed(startedAt),
     });
   };
 
@@ -518,7 +551,7 @@ function WeakSpotDrill({ stage, onAttempt, onDone }) {
   const [round, setRound] = useState(0);
   const [typed, setTyped] = useState('');
   const [result, setResult] = useState(null);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef(null);
 
   const item = stage.items[index];
   if (!item) return <Continue onDone={onDone} label="Continue" />;
@@ -539,7 +572,7 @@ function WeakSpotDrill({ stage, onAttempt, onDone }) {
         verseKey: item.verseKey,
         typed,
         expected: item.expected,
-        durationMs: Date.now() - startedAt.current,
+        durationMs: elapsed(startedAt),
       });
       setResult(res);
     };
@@ -614,7 +647,7 @@ function WeakSpotDrill({ stage, onAttempt, onDone }) {
       verseKey: item.verseKey,
       typed,
       expected: item.expected,
-      durationMs: Date.now() - startedAt.current,
+      durationMs: elapsed(startedAt),
     });
     advanceItem();
   };

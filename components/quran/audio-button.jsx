@@ -14,13 +14,19 @@ export default function AudioButton({ src, label = 'Listen', className, onEnded 
   const audioRef = useRef(null);
   const [state, setState] = useState('idle'); // idle | loading | playing | error
 
-  useEffect(() => {
+  // Reset when the ayah changes. This is React's documented way to adjust state
+  // on a prop change - an effect that calls setState would cascade a render.
+  const [loadedSrc, setLoadedSrc] = useState(src);
+  if (src !== loadedSrc) {
+    setLoadedSrc(src);
     setState('idle');
+  }
+
+  useEffect(() => {
     const el = audioRef.current;
-    if (el) {
-      el.pause();
-      el.currentTime = 0;
-    }
+    if (!el) return;
+    el.pause();
+    el.currentTime = 0;
   }, [src]);
 
   const toggle = async () => {

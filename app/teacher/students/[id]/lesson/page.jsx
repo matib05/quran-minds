@@ -14,18 +14,19 @@ export const dynamic = 'force-dynamic';
 const repo = getQuranRepository();
 
 export default async function LessonPage({ params }) {
+  const { id } = await params;
   const user = await requireRole('TEACHER', 'ADMIN');
-  if (!(await canAccessStudent(user, params.id))) notFound();
+  if (!(await canAccessStudent(user, id))) notFound();
 
   const [student, assignments, todaysLesson, weakness] = await Promise.all([
-    prisma.studentProfile.findUnique({ where: { id: params.id }, include: { user: true } }),
-    prisma.assignment.findMany({ where: { studentId: params.id, active: true } }),
+    prisma.studentProfile.findUnique({ where: { id }, include: { user: true } }),
+    prisma.assignment.findMany({ where: { studentId: id, active: true } }),
     prisma.teacherLesson.findFirst({
-      where: { studentId: params.id, teacherId: user.id, date: startOfDay() },
+      where: { studentId: id, teacherId: user.id, date: startOfDay() },
       include: { entries: true, mistakes: true },
     }),
     prisma.weaknessScore.findMany({
-      where: { studentId: params.id, level: 'WORD' },
+      where: { studentId: id, level: 'WORD' },
       orderBy: { score: 'desc' },
       take: 40,
     }),

@@ -20,6 +20,7 @@ export default async function ProgressPage() {
       select: { juz: true, page: true, state: true },
     }),
     prisma.practiceSession.findMany({
+      /* eslint-disable-next-line react-hooks/purity -- async server component: this runs once per request, not on re-render */
       where: { studentId: student.id, startedAt: { gte: new Date(Date.now() - 56 * DAY) } },
       orderBy: { startedAt: 'asc' },
     }),

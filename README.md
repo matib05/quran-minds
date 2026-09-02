@@ -72,6 +72,7 @@ ending, Ibrahim is on a 15-day streak, and Fatimah is new.
 | `npm run dev` | Dev server |
 | `npm run build` | Regenerate Qur'an data, generate Prisma client, build |
 | `npm test` | Vitest — 81 tests over the Qur'an data, grading, and Hifdh engines |
+| `npm run lint` | ESLint 9 flat config (`eslint.config.mjs`) |
 | `npm run quran:build` | Rebuild `lib/quran/data/` from `resources/` |
 | `npm run db:migrate` / `db:seed` / `db:studio` | Prisma |
 | `docker compose up -d` / `down` | Local Postgres |
@@ -93,7 +94,7 @@ free-tier limit was hit; the container above is unaffected by either.
 
 ## Deploying
 
-Vercel, or anything that runs Next.js 14 on Node.
+Vercel, or anything that runs Next.js 16 on Node.
 
 1. Set `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` (with the same
    `schema=`) in the host's environment.

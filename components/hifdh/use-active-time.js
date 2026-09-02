@@ -22,9 +22,13 @@ const FLUSH_EVERY_S = 20;
 export function useActiveTime({ sessionId, category, onFlush }) {
   const buckets = useRef({ SABAQ: 0, SABQI: 0, MANZIL: 0, OTHER: 0 });
   const pending = useRef(0);
-  const lastInteraction = useRef(Date.now());
+  const lastInteraction = useRef(0);
   const categoryRef = useRef(category);
-  categoryRef.current = category;
+
+  // Writing a ref during render is not allowed; mirror the prop in an effect.
+  useEffect(() => {
+    categoryRef.current = category;
+  }, [category]);
 
   const markInteraction = useCallback(() => {
     lastInteraction.current = Date.now();
@@ -52,6 +56,7 @@ export function useActiveTime({ sessionId, category, onFlush }) {
   }, [sessionId, onFlush]);
 
   useEffect(() => {
+    lastInteraction.current = Date.now();
     const events = ['pointerdown', 'keydown', 'input', 'scroll', 'touchstart'];
     for (const e of events) window.addEventListener(e, markInteraction, { passive: true });
 
