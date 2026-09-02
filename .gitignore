@@ -38,3 +38,12 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# scratch
+/.tmp/
+
+# generated from resources/ by npm run quran:build
+/lib/quran/data/
+
+# local postgres cluster
+/.pgdata/

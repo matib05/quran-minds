@@ -2,78 +2,149 @@
 @tailwind components;
 @tailwind utilities;
 
-
+/*
+ * Mushaf-compatible Qur'anic typeface, self-hosted so the canonical text never
+ * depends on a third-party font CDN being reachable.
+ */
 @font-face {
-  font-family: 'Uthmani';
-  src: url("../public/uthmanicscript.otf") format("opentype");
-}
-
-.uthmani {
-  font-family: 'Uthmani', serif;
+  font-family: 'UthmanicScript';
+  src: url('/uthmanicscript.otf') format('opentype');
+  font-display: swap;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Parchment and ink - calm, warm, and quiet enough that the Qur'an on the
+       page is the brightest thing in the interface. */
+    --background: 40 33% 97%;
+    --foreground: 24 10% 12%;
+
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 24 10% 12%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 24 10% 12%;
+
+    /* Deep emerald */
+    --primary: 162 62% 20%;
+    --primary-foreground: 40 33% 97%;
+
+    --secondary: 40 25% 93%;
+    --secondary-foreground: 162 40% 18%;
+
+    --muted: 40 20% 94%;
+    --muted-foreground: 30 8% 42%;
+
+    /* Muted gold, used sparingly for emphasis - never for reward flashing. */
+    --accent: 38 52% 47%;
+    --accent-foreground: 40 33% 97%;
+
+    --destructive: 0 62% 44%;
+    --destructive-foreground: 40 33% 97%;
+
+    --success: 152 45% 32%;
+    --warning: 32 78% 44%;
+
+    --border: 36 18% 87%;
+    --input: 36 18% 87%;
+    --ring: 162 62% 26%;
+    --radius: 0.75rem;
+
+    /* Surface for Qur'anic text */
+    --mushaf: 42 44% 96%;
+    --mushaf-border: 38 30% 84%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 170 18% 8%;
+    --foreground: 40 20% 92%;
+    --card: 170 16% 11%;
+    --card-foreground: 40 20% 92%;
+    --popover: 170 16% 11%;
+    --popover-foreground: 40 20% 92%;
+    --primary: 162 45% 55%;
+    --primary-foreground: 170 30% 8%;
+    --secondary: 170 12% 16%;
+    --secondary-foreground: 40 20% 92%;
+    --muted: 170 12% 16%;
+    --muted-foreground: 40 8% 62%;
+    --accent: 38 55% 58%;
+    --accent-foreground: 170 30% 8%;
+    --destructive: 0 55% 52%;
+    --destructive-foreground: 40 20% 92%;
+    --success: 152 40% 52%;
+    --warning: 32 70% 58%;
+    --border: 170 10% 20%;
+    --input: 170 10% 20%;
+    --ring: 162 45% 50%;
+    --mushaf: 170 14% 12%;
+    --mushaf-border: 170 10% 22%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Never let a long ayah or a wide table push the page sideways. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /*
+   * Qur'anic text. Always rendered right-to-left with generous line height:
+   * Uthmani script stacks marks above and below the baseline and becomes
+   * unreadable when it is crowded.
+   */
+  .quran {
+    font-family: 'UthmanicScript', 'Traditional Arabic', 'Amiri', serif;
+    direction: rtl;
+    text-align: right;
+    line-height: 2.15;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+  }
+
+  .quran-lg {
+    @apply quran;
+    font-size: clamp(1.6rem, 1.1rem + 2.4vw, 2.6rem);
+  }
+
+  .quran-md {
+    @apply quran;
+    font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem);
+  }
+
+  .quran-sm {
+    @apply quran;
+    font-size: clamp(1.1rem, 0.95rem + 0.9vw, 1.5rem);
+  }
+
+  /* A word that can be tapped to record a mistake. */
+  .quran-word {
+    @apply inline-block cursor-pointer rounded-md px-0.5 transition-colors duration-150;
+    /* A comfortable touch target without breaking the line rhythm. */
+    padding-block: 0.05em;
+  }
+
+  .surface-mushaf {
+    background-color: hsl(var(--mushaf));
+    border-color: hsl(var(--mushaf-border));
+  }
+}
+
+/* Respect a reader who does not want motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

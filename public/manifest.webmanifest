@@ -1,0 +1,11 @@
+{
+  "name": "Quran Minds",
+  "short_name": "Quran Minds",
+  "description": "Hifdh management for students, teachers, parents and Islamic schools.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#134e3a",
+  "orientation": "portrait-primary",
+  "icons": [{ "src": "/QMLogo.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+}
