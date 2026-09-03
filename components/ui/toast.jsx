@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react"
-import { Cross2Icon } from "@radix-ui/react-icons"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva } from "class-variance-authority";
 
@@ -65,7 +64,7 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
     )}
     toast-close=""
     {...props}>
-    <Cross2Icon className="h-4 w-4" />
+    <CloseIcon />
   </ToastPrimitives.Close>
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName
@@ -84,3 +83,20 @@ const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
 export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction };
+
+/** Inline rather than a dependency - this is the only icon in the app. */
+function CloseIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 15 15"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      className="h-4 w-4"
+    >
+      <path d="M3.5 3.5l8 8M11.5 3.5l-8 8" />
+    </svg>
+  );
+}

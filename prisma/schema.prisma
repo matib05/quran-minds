@@ -1,0 +1,523 @@
+// Quran Minds - Hifdh management schema
+//
+// Design rule: this database stores the *student's relationship to* the Qur'an,
+// never a copy of the Qur'an itself. Every reference below is a canonical
+// address ("2:255", word 7, page 42) resolved through lib/quran/QuranRepository.
+// No table holds Arabic Qur'anic text.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// ---------------------------------------------------------------- enums ----
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+/// The three pillars of a Hifdh day.
+enum HifdhCategory {
+  SABAQ // today's new memorization
+  SABQI // recent material under reinforcement
+  MANZIL // long-term revision
+}
+
+/// How a teacher expressed an assignment. The resolved verse range is always
+/// stored alongside, so the app never has to re-derive it.
+enum AssignmentScope {
+  AYAH_RANGE
+  PAGE_RANGE
+  SURAH
+  JUZ
+  HIZB
+  CUSTOM
+}
+
+enum CompletionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  INCOMPLETE
+}
+
+enum LessonRating {
+  EXCELLENT
+  GOOD
+  NEEDS_WORK
+  REPEAT_TOMORROW
+}
+
+enum MistakeType {
+  FORGOTTEN_WORD
+  WRONG_WORD
+  SKIPPED_WORD
+  ADDED_WORD
+  WORD_ORDER
+  HESITATION
+  BEGINNING_ERROR
+  ENDING_ERROR
+  MUTASHABIHAT
+  TAJWID
+  PRONUNCIATION
+}
+
+enum MistakeSource {
+  TEACHER
+  TYPING
+  RECITATION
+  QUIZ
+}
+
+enum ExerciseMode {
+  LISTEN_FOLLOW
+  FIVE_BY_FIVE
+  TYPE_FROM_MEMORY
+  VANISHING_WORDS
+  NEXT_WORD
+  COMPLETE_AYAH
+  NEXT_AYAH
+  MUTASHABIHAT
+  RECITATION
+}
+
+enum MemorizationState {
+  NOT_STARTED
+  LEARNING
+  MEMORIZED
+  STRONG
+  NEEDS_REVISION
+  WEAK
+}
+
+/// Granularity of a weakness score.
+enum WeaknessLevel {
+  WORD
+  AYAH
+  PAGE
+  SURAH
+  JUZ
+}
+
+// ------------------------------------------------------------- identity ----
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("UTC")
+  /// School-level policy: gamification on/off, strict tashkeel, sabqi window.
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  classes  Class[]
+  programs Program[]
+
+  @@map("schools")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  schoolId     String?
+  active       Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  sessions       Session[]
+  studentProfile StudentProfile?
+  classesTaught  ClassTeacher[]
+  childLinks     ParentLink[]    @relation("ParentOf")
+  assignmentsSet Assignment[]    @relation("AssignedBy")
+  lessonsTaught  TeacherLesson[] @relation("LessonTeacher")
+  mistakesLogged Mistake[]       @relation("MistakeTeacher")
+
+  @@index([schoolId, role])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Program {
+  id       String @id @default(cuid())
+  schoolId String
+  name     String
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classes Class[]
+
+  @@unique([schoolId, name])
+  @@map("programs")
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  schoolId  String
+  programId String?
+  name      String
+  createdAt DateTime @default(now())
+
+  school      School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  program     Program?       @relation(fields: [programId], references: [id], onDelete: SetNull)
+  teachers    ClassTeacher[]
+  enrollments Enrollment[]
+
+  @@unique([schoolId, name])
+  @@map("classes")
+}
+
+/// A teacher may teach many classes; a class may have many teachers.
+model ClassTeacher {
+  classId   String
+  teacherId String
+
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher User  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@id([classId, teacherId])
+  @@index([teacherId])
+  @@map("class_teachers")
+}
+
+model StudentProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  schoolId String?
+
+  /// How much recent material counts as Sabqi, in mushaf pages.
+  sabqiWindowPages Int     @default(5)
+  /// The "5" in the 5-5-5 method; a teacher may raise or lower it.
+  repetitionTarget Int     @default(5)
+  /// Require harakat when grading typed answers.
+  strictTashkeel   Boolean @default(false)
+  gamificationOn   Boolean @default(true)
+  /// Minutes of active practice expected per day.
+  dailyGoalMinutes Int     @default(20)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  parentLinks ParentLink[]
+  assignments Assignment[]
+  lessons     TeacherLesson[]
+  mistakes    Mistake[]
+  sessions    PracticeSession[]
+  attempts    PracticeAttempt[]
+  progress    AyahProgress[]
+  weaknesses  WeaknessScore[]
+  points      PointTransaction[]
+  achievements Achievement[]
+
+  @@map("student_profiles")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  active    Boolean  @default(true)
+  joinedAt  DateTime @default(now())
+
+  class   Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+  @@map("enrollments")
+}
+
+model ParentLink {
+  id        String @id @default(cuid())
+  parentId  String
+  studentId String
+  relation  String @default("parent")
+
+  parent  User           @relation("ParentOf", fields: [parentId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([studentId])
+  @@map("parent_links")
+}
+
+// ------------------------------------------------------------ hifdh ---------
+
+/// One of a student's three daily portions. Stores the teacher's expression of
+/// the range (page 76, juz 30, ...) AND the resolved verse range, so practice
+/// never has to guess what was meant.
+model Assignment {
+  id        String        @id @default(cuid())
+  studentId String
+  teacherId String?
+  category  HifdhCategory
+  scope     AssignmentScope
+
+  /// Resolved canonical range - always populated.
+  fromVerseKey String
+  toVerseKey   String
+  ayahCount    Int
+
+  /// How the teacher expressed it, kept for display and for editing.
+  pageStart   Int?
+  pageEnd     Int?
+  /// Mushaf line numbers are a teacher-entered annotation shown next to the
+  /// page; the system does not have line-level layout data and does not
+  /// pretend to - the authoritative range is the verse range above.
+  lineStart   Int?
+  lineEnd     Int?
+  surahNumber Int?
+  juzNumber   Int?
+  hizbNumber  Int?
+  label       String?
+
+  /// The day this portion is for (date only, school timezone).
+  assignedFor DateTime
+  active      Boolean  @default(true)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student  StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher  User?          @relation("AssignedBy", fields: [teacherId], references: [id], onDelete: SetNull)
+  entries  LessonEntry[]
+
+  @@index([studentId, assignedFor])
+  @@index([studentId, category, active])
+  @@map("assignments")
+}
+
+/// What the teacher recorded when they heard the student, one row per day.
+model TeacherLesson {
+  id        String   @id @default(cuid())
+  studentId String
+  teacherId String
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher User           @relation("LessonTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  entries LessonEntry[]
+  mistakes Mistake[]
+
+  @@index([studentId, date])
+  @@index([teacherId, date])
+  @@map("teacher_lessons")
+}
+
+/// The teacher's verdict on one category within one lesson.
+model LessonEntry {
+  id           String           @id @default(cuid())
+  lessonId     String
+  assignmentId String?
+  category     HifdhCategory
+  status       CompletionStatus @default(NOT_STARTED)
+  rating       LessonRating?
+  mistakeCount Int              @default(0)
+
+  lesson     TeacherLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  assignment Assignment?   @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+
+  @@unique([lessonId, category])
+  @@map("lesson_entries")
+}
+
+/// The single most valuable table in the product: every error, addressed to a
+/// canonical word, with where it came from.
+model Mistake {
+  id           String         @id @default(cuid())
+  studentId    String
+  verseKey     String
+  wordPosition Int?
+  mistakeType  MistakeType
+  source       MistakeSource
+  category     HifdhCategory?
+
+  teacherId         String?
+  lessonId          String?
+  practiceSessionId String?
+
+  /// Denormalised for fast weakness rollups without a Qur'an lookup per row.
+  page Int
+  juz  Int
+
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  student StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher User?            @relation("MistakeTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  lesson  TeacherLesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  session PracticeSession? @relation(fields: [practiceSessionId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, verseKey])
+  @@index([studentId, resolved, createdAt])
+  @@index([studentId, createdAt])
+  @@index([studentId, page])
+  @@map("mistakes")
+}
+
+// ----------------------------------------------------------- practice ------
+
+/// One sitting. `activeSeconds` is accumulated from interaction heartbeats,
+/// not from how long the tab stayed open.
+model PracticeSession {
+  id        String    @id @default(cuid())
+  studentId String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  activeSeconds Int @default(0)
+  sabaqSeconds  Int @default(0)
+  sabqiSeconds  Int @default(0)
+  manzilSeconds Int @default(0)
+
+  ayatPracticed       Int  @default(0)
+  repetitions         Int  @default(0)
+  exercisesCompleted  Int  @default(0)
+  sabaqAccuracy       Int?
+  sabqiAccuracy       Int?
+  manzilAccuracy      Int?
+  completed           Boolean @default(false)
+
+  student  StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attempts PracticeAttempt[]
+  mistakes Mistake[]
+
+  @@index([studentId, startedAt])
+  @@map("practice_sessions")
+}
+
+model PracticeAttempt {
+  id        String         @id @default(cuid())
+  sessionId String
+  studentId String
+  category  HifdhCategory?
+  mode      ExerciseMode
+  verseKey  String
+
+  fromWordPosition Int?
+  toWordPosition   Int?
+
+  correct     Boolean
+  accuracy    Int     @default(0)
+  durationMs  Int     @default(0)
+  repetitions Int     @default(1)
+  createdAt   DateTime @default(now())
+
+  session PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, verseKey])
+  @@index([sessionId])
+  @@map("practice_attempts")
+}
+
+// ---------------------------------------------------------- knowledge ------
+
+/// Per-student memorization state and revision schedule for one ayah.
+model AyahProgress {
+  id        String            @id @default(cuid())
+  studentId String
+  verseKey  String
+  state     MemorizationState @default(NOT_STARTED)
+
+  page Int
+  juz  Int
+
+  firstMemorizedAt   DateTime?
+  lastReviewedAt     DateTime?
+  nextReviewAt       DateTime?
+  intervalDays       Int  @default(1)
+  consecutiveSuccess Int  @default(0)
+  reviewCount        Int  @default(0)
+  lastAccuracy       Int?
+
+  updatedAt DateTime @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, verseKey])
+  @@index([studentId, nextReviewAt])
+  @@index([studentId, state])
+  @@index([studentId, juz])
+  @@map("ayah_progress")
+}
+
+/// Rolled-up weakness at word / ayah / page / surah / juz level.
+/// `refKey` is "67:3#6" for a word, "67:3" for an ayah, "p:562", "s:67", "j:29".
+model WeaknessScore {
+  id        String        @id @default(cuid())
+  studentId String
+  level     WeaknessLevel
+  refKey    String
+
+  score         Float     @default(0)
+  mistakeCount  Int       @default(0)
+  lastMistakeAt DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, level, refKey])
+  @@index([studentId, level, score])
+  @@map("weakness_scores")
+}
+
+// -------------------------------------------------------- motivation -------
+
+model PointTransaction {
+  id        String   @id @default(cuid())
+  studentId String
+  amount    Int
+  reason    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+  @@map("point_transactions")
+}
+
+model Achievement {
+  id        String   @id @default(cuid())
+  studentId String
+  code      String
+  earnedAt  DateTime @default(now())
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, code])
+  @@map("achievements")
+}
