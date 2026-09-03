@@ -15,11 +15,7 @@
     "db:seed": "node prisma/seed.mjs",
     "db:studio": "prisma studio",
     "predev": "npm run quran:build",
-    "pretest": "npm run quran:build",
-    "db:start": "node scripts/db-local.mjs start",
-    "db:stop": "node scripts/db-local.mjs stop",
-    "db:status": "node scripts/db-local.mjs status",
-    "db:reset": "node scripts/db-local.mjs reset"
+    "pretest": "npm run quran:build"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -54,7 +50,6 @@
     "vitest": "^3.2.4"
   },
   "allowScripts": {
-    "@embedded-postgres/windows-x64@18.4.0-beta.17": true,
     "esbuild@0.28.2": true,
     "unrs-resolver@1.12.2": true,
     "prisma@6.12.0": true,

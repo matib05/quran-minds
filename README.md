@@ -18,15 +18,8 @@ npm install
 
 ### A database
 
-The quickest path is the bundled Postgres container:
-
-```bash
-docker compose up -d
-```
-
-Then `cp .env.example .env` — it already points at that container. If you would
-rather use a hosted database (Neon, Supabase, Vercel Postgres), put its URLs in
-`.env` instead; `.env.example` has an annotated template.
+Any PostgreSQL will do — a hosted one (Neon, Supabase, Vercel Postgres) or a
+local install. Copy `.env.example` to `.env` and put its two connection URLs in.
 
 Two things matter whichever you choose:
 
@@ -75,20 +68,24 @@ ending, Ibrahim is on a 15-day streak, and Fatimah is new.
 | `npm run lint` | ESLint 9 flat config (`eslint.config.mjs`) |
 | `npm run quran:build` | Rebuild `lib/quran/data/` from `resources/` |
 | `npm run db:migrate` / `db:seed` / `db:studio` | Prisma |
-| `docker compose up -d` / `down` | Local Postgres |
 
 ### If the database is unreachable
 
 Every page needs the database, so a connection failure shows up as a Prisma
-error on whatever you touch first — often the login form. Check the database
-before suspecting the app:
+error on whatever you touch first — often the login form. Prisma reports a
+connection it cannot open as `Timed out fetching a new connection from the
+connection pool`, which reads like pool exhaustion but usually is not.
+
+Check the database itself before suspecting the app:
 
 ```bash
-docker compose ps
+npx prisma db execute --stdin <<< "select 1"
 ```
 
-A hosted database that has gone quiet usually means the compute suspended or a
-free-tier limit was hit; the container above is unaffected by either.
+If that fails too, the usual causes are a hosted compute that has suspended or
+hit a free-tier limit, or outbound port 5432 being blocked by a VPN, a corporate
+network or endpoint security software. A phone hotspot is the fastest way to
+tell the two apart.
 
 ---
 
